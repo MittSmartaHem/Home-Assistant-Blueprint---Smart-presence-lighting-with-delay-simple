@@ -1,12 +1,13 @@
 blueprint:
   name: Presence-Based Lighting (Simplified)
   description: >
-    Automates lighting based on presence detection.
-    Lights turn on at full brightness when presence is detected,
-    and turn off after a configurable delay depending on how long presence was active.
+    Automates lighting based purely on presence detection.
+    Lights turn on at a configurable brightness when presence is detected,
+    and turn off after a delay based on how long presence was active.
 
     No helpers required — all logic is internal.
   domain: automation
+  author: MittSmartaHem
   homeassistant:
     min_version: 2024.6.0
 
