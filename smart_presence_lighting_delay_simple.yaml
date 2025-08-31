@@ -1,0 +1,110 @@
+blueprint:
+  name: Presence-Based Lighting (Simplified)
+  description: >
+    Automates lighting based on presence detection.
+    Lights turn on at full brightness when presence is detected,
+    and turn off after a configurable delay depending on how long presence was active.
+
+    No helpers required — all logic is internal.
+  domain: automation
+  homeassistant:
+    min_version: 2024.6.0
+
+  input:
+    presence_sensor:
+      name: Presence Sensor
+      selector:
+        entity:
+          domain: binary_sensor
+          device_class: occupancy
+    light_target:
+      name: Light Target
+      selector:
+        target:
+          entity:
+            domain: light
+    brightness:
+      name: Brightness (%)
+      default: 100
+      selector:
+        number:
+          min: 1
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+    delay_short:
+      name: Delay for short presence (<1 min)
+      default: "00:00:00"
+      selector:
+        time:
+    delay_medium:
+      name: Delay for medium presence (<5 min)
+      default: "00:00:30"
+      selector:
+        time:
+    delay_long:
+      name: Delay for long presence (<10 min)
+      default: "00:01:00"
+      selector:
+        time:
+    delay_max:
+      name: Delay for extended presence (>10 min)
+      default: "00:01:00"
+      selector:
+        time:
+
+trigger:
+  - platform: state
+    entity_id: !input presence_sensor
+    to: "on"
+    id: presence_detected
+  - platform: state
+    entity_id: !input presence_sensor
+    to: "off"
+    id: presence_cleared
+
+mode: restart
+
+action:
+  - choose:
+      - conditions:
+          - condition: trigger
+            id: presence_detected
+        sequence:
+          - alias: Turn on light at configured brightness
+            service: light.turn_on
+            target: !input light_target
+            data:
+              brightness_pct: !input brightness
+              transition: 2
+
+      - conditions:
+          - condition: trigger
+            id: presence_cleared
+        sequence:
+          - alias: Calculate duration since last presence
+            variables:
+              duration: "{{ (as_timestamp(now()) - as_timestamp(states[!input presence_sensor].last_changed)) | int }}"
+          - choose:
+              - conditions:
+                  - condition: template
+                    value_template: "{{ duration < 60 }}"
+                sequence:
+                  - delay: !input delay_short
+              - conditions:
+                  - condition: template
+                    value_template: "{{ duration < 300 }}"
+                sequence:
+                  - delay: !input delay_medium
+              - conditions:
+                  - condition: template
+                    value_template: "{{ duration < 600 }}"
+                sequence:
+                  - delay: !input delay_long
+            default:
+              - delay: !input delay_max
+          - alias: Turn off light after delay
+            service: light.turn_off
+            target: !input light_target
+            data:
+              transition: 2
