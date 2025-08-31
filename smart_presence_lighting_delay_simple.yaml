@@ -85,7 +85,8 @@ action:
         sequence:
           - alias: Calculate duration since last presence
             variables:
-              duration: "{{ (as_timestamp(now()) - as_timestamp(states[!input presence_sensor].last_changed)) | int }}"
+              sensor_entity: !input presence_sensor
+              duration: "{{ (as_timestamp(now()) - as_timestamp(states[sensor_entity].last_changed)) | int }}"
           - choose:
               - conditions:
                   - condition: template
