@@ -8,6 +8,7 @@ blueprint:
     No helpers required — all logic is internal.
   domain: automation
   author: MittSmartaHem
+  version: "1.0.0"
   homeassistant:
     min_version: 2024.6.0
 
